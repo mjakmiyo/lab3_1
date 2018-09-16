@@ -36,6 +36,12 @@ public class BookKeeperTest {
 	}
 
 	@Test
+	public void invoiceRequestWithNoItemsShouldNotInvokeCalculateTaxMethod() {
+		bookKeeper.issuance(invoiceRequest, taxPolicy);
+		verify(taxPolicy, times(0)).calculateTax(Mockito.<ProductType>any(), Mockito.<Money>any());
+	}
+
+	@Test
 	public void invoiceRequestWithOneItemShouldReturnInvoiceWithOneItem() {
 		requestItem = new RequestItem(productData, 1, new Money(1));
 		invoiceRequest.add(requestItem);
