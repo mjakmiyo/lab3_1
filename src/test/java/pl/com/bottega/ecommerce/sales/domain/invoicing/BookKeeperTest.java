@@ -30,6 +30,12 @@ public class BookKeeperTest {
 	TaxPolicy taxPolicy;
 
 	@Test
+	public void invoiceRequestWithNoItemShouldReturnEmptyInvoice() {
+		final Invoice issuedInvoice = bookKeeper.issuance(invoiceRequest, taxPolicy);
+		assertThat(issuedInvoice.getItems().size(), is(0));
+	}
+
+	@Test
 	public void invoiceRequestWithOneItemShouldReturnInvoiceWithOneItem() {
 		requestItem = new RequestItem(productData, 1, new Money(1));
 		invoiceRequest.add(requestItem);
