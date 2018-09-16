@@ -27,21 +27,27 @@ import pl.com.bottega.ecommerce.sales.domain.productscatalog.ProductType;
 import pl.com.bottega.ecommerce.sales.domain.reservation.Reservation;
 import pl.com.bottega.ecommerce.sales.domain.reservation.ReservationRepository;
 import pl.com.bottega.ecommerce.sharedkernel.Money;
+import pl.com.bottega.ecommerce.system.application.SystemContext;
+import pl.com.bottega.ecommerce.system.application.SystemUser;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AddProductCommandHandlerTest {
 	@InjectMocks
 	private AddProductCommandHandler addProductCommandHandler;
+	Client client;
 	@Mock
 	private ClientRepository clientRepositoryMock;
 	Product product;
 	@Mock
 	private ProductRepository productRepositoryMock;
 	Reservation reservation;
+
 	@Mock
 	private ReservationRepository reservationRepositoryMock;
 	@Mock
 	private SuggestionService suggestionServiceMock;
+	@Mock
+	private SystemContext systemContextMock;
 
 	@Test
 	public void addingAnAvailableProductShouldGetProductFromRepository() {
@@ -64,6 +70,21 @@ public class AddProductCommandHandlerTest {
 		verify(suggestionServiceMock, never()).suggestEquivalent(any(Product.class), any(Client.class));
 	}
 
+	@Test
+	public void addingANotAvailableProductShouldSuggestAProduct() {
+		product.markAsRemoved();
+		when(productRepositoryMock.load(any(Id.class))).thenReturn(product);
+
+		client = new Client();
+		when(clientRepositoryMock.load(any(Id.class))).thenReturn(client);
+		when(systemContextMock.getSystemUser()).thenReturn(new SystemUser(Id.generate()));
+		when(suggestionServiceMock.suggestEquivalent(any(Product.class), any(Client.class)))
+				.thenReturn(new Product(Id.generate(), new Money(1), "Test Product", ProductType.STANDARD));
+
+		addProductCommandHandler.handle(new AddProductCommand(Id.generate(), Id.generate(), 1));
+		verify(suggestionServiceMock, times(1)).suggestEquivalent(any(Product.class), any(Client.class));
+	}
+
 	@Before
 	public void setUp() {
 		reservation = new Reservation(Id.generate(), Reservation.ReservationStatus.OPENED,
@@ -73,5 +94,4 @@ public class AddProductCommandHandlerTest {
 		product = new Product(Id.generate(), new Money(1), "Test Product", ProductType.STANDARD);
 		when(productRepositoryMock.load(any(Id.class))).thenReturn(product);
 	}
-
 }
